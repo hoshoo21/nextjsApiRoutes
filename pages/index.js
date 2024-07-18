@@ -1,8 +1,9 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
+
 function HomdePage(props) {
     const inputEmailRef = useRef();
     const inputFeedbackRef = useRef();
-
+    const [feedbackItems, setFeedbackItems] = useState(null);
     const hanldeSubmit = async (evt) => {
         evt.preventDefault();
         const enteredEmail = inputEmailRef.current.value;
@@ -31,6 +32,15 @@ function HomdePage(props) {
 
 
     }
+    const handleLoadFeedbacks = async (evt) => {
+        evt.preventDefault();
+        fetch('/api/feedback')
+            .then((res) => res.json())
+            .then((data) => {
+                setFeedbackItems(data.feedback);
+
+            });
+    }
 
     return (
 
@@ -49,6 +59,16 @@ function HomdePage(props) {
                     <button onClick={hanldeSubmit}> Send Back</button>
                 </div>
             </form>
+
+            <hr />
+            <button onClick={handleLoadFeedbacks}>Load Feedbacks </button>
+            <ul>
+                {feedbackItems &&
+                    feedbackItems.map(feedbackItem => {
+                        return <li key={feedbackItem.id}> Email : {feedbackItem.email} <br /> Content :  {feedbackItem.content}</li>
+                    })
+                }
+            </ul>
         </div>
     );
 

@@ -16,9 +16,8 @@ export default async function handler(req, res) {
                     content: req.body.text
                 };
                 const feedback = new Feedback(feedbackModel);
-                console.log(feedback)
                 const savedFeedback = await feedback.save();
-                res.status(201).json(savedFeedback);
+                res.status(201).json({ "feedback": savedFeedback });
             } catch (error) {
                 res.status(500).json({ message: 'Error creating feedback', error });
             }
@@ -26,13 +25,15 @@ export default async function handler(req, res) {
 
         case 'GET':
             try {
-                console.log('coming here');
 
                 const { email } = req.query;
-                const feedback = await Feedback.findOne({ email: email });
-
+                let feedback;
+                if (!email)
+                    feedback = await Feedback.find({});
+                else
+                    feedback = await Feedback.find({ email: email });
                 if (feedback) {
-                    res.status(200).json(feedback);
+                    res.status(200).json({ "feedback": feedback });
                 } else {
                     res.status(404).json({ message: 'Feedback not found' });
                 }
