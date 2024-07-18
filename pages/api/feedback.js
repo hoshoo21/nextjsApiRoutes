@@ -10,7 +10,13 @@ export default async function handler(req, res) {
     switch (method) {
         case 'POST':
             try {
-                const feedback = new Feedback(req.body);
+                const feedbackModel = {
+                    id: new Date().toISOString(),
+                    email: req.body.email,
+                    content: req.body.text
+                };
+                const feedback = new Feedback(feedbackModel);
+                console.log(feedback)
                 const savedFeedback = await feedback.save();
                 res.status(201).json(savedFeedback);
             } catch (error) {
@@ -20,8 +26,11 @@ export default async function handler(req, res) {
 
         case 'GET':
             try {
-                const { emailparam } = req.query;
-                const feedback = await Feedback.findOne({ email: emailparam });
+                console.log('coming here');
+
+                const { email } = req.query;
+                const feedback = await Feedback.findOne({ email: email });
+
                 if (feedback) {
                     res.status(200).json(feedback);
                 } else {
