@@ -1,61 +1,40 @@
-import fs from 'fs';
-import path from 'path';
-import { resourceUsage } from 'process';
-const insertIntoDB = async (collectionname, data) => {
-    const mongooseClient = require('mongoose');
-    mongooseClient
-        .connect("mongodb://localhost:27017/feedback",
-            {
-                useNewUrlParser: true,
-                useUnifiedTopology: true
-            });
+// pages/api/feedback.js
+import connectDB from './lib/db';
+import Feedback from './models/feedback';
 
-    const db = mongooseClient.connection;
-    db.once('open', () => {
-        console.log('Connected to MongoDB');
+export default async function handler(req, res) {
+    await connectDB();
 
-    });
-    const { Schema } = mongooseClient.Schema;
-    const feedbackSchema = new Schema({
-        id: String,
-        email: String,
-        feedbackcontent: String
-    });
-    const feeback = mongooseClient.model('feedbackcoll', feedbackSchema);
-    const feedbackentry = new feeback(data);
-    const result = await feedbackentry.save();
-    console.log(result);
+    const { method } = req;
 
-    // const dbb = await cleint.db("feedback");
-    // const collection = await dbb.collection(collectionname);
+    switch (method) {
+        case 'POST':
+            try {
+                const feedback = new Feedback(req.body);
+                const savedFeedback = await feedback.save();
+                res.status(201).json(savedFeedback);
+            } catch (error) {
+                res.status(500).json({ message: 'Error creating feedback', error });
+            }
+            break;
 
-    //const res = await collection.insertOne(data);
+        case 'GET':
+            try {
+                const { emailparam } = req.query;
+                const feedback = await Feedback.findOne({ email: emailparam });
+                if (feedback) {
+                    res.status(200).json(feedback);
+                } else {
+                    res.status(404).json({ message: 'Feedback not found' });
+                }
+            } catch (error) {
+                res.status(500).json({ message: 'Error retrieving feedback', error });
+            }
+            break;
 
-    //console.log(res);
-
-
-}
-const handler = async (req, res) => {
-    if (req.method === 'POST') {
-        const emailEntered = req.body.email;
-        const feedEntered = req.body.text;
-
-        const newFeedback = {
-            id: new Date().toISOString(),
-            email: emailEntered,
-            feedback: feedEntered,
-        }
-        console.log("email received" + newFeedback.email)
-
-        await insertIntoDB("feedbackcoll", newFeedback);
-        res.status(200).json({ message: "record inserted successfully" });
+        default:
+            res.setHeader('Allow', ['GET', 'POST']);
+            res.status(405).end(`Method ${method} Not Allowed`);
+            break;
     }
-    else {
-        res.status(200).json({
-            message: 'this works'
-        })
-    }
-    return res;
 }
-
-export default handler;
